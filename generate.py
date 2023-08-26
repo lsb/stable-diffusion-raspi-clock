@@ -28,7 +28,7 @@ if torch.backends.mps.is_available():
     refiner = refiner.to("mps")
 
 
-def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed=42, n_steps=20, high_noise_frac=0.8, negative_prompt="wrong, ugly"):
+def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed=42, n_steps=20, high_noise_frac=0.8, negative_prompt="wrong, ugly", guidance_scale=7.5):
     gen = torch.Generator().manual_seed(seed)
     image = base(
         prompt=prompt,
@@ -39,6 +39,7 @@ def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed
         width=512,
         denoising_end=high_noise_frac,
         output_type="latent",
+        guidance_scale=guidance_scale,
     ).images
     image = refiner(
         prompt=prompt,
@@ -47,6 +48,7 @@ def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed
         num_inference_steps=n_steps,
         denoising_start=high_noise_frac,
         image=image,
+        guidance_scale=guidance_scale,
     ).images[0]
     return image
 
@@ -56,31 +58,24 @@ vegetables = [
     "broccoli floret",
     "celery",
     "dandelion flower and greens",
+    "eggplant",
+    "sliced fig",
+    "green beans",
+    "hazelnut nutella on bread",
 ]
 
-
-daynight = [
-    "in the sun",
-    "under moonlight",
-]
-
-
-vegetable_media = [
-    "watercolor"
-]
 
 def clock_time_to_still_life_prompt(now):
     # day is 12 hours 0600-1800, night is 1800-0600+1, split into quarters, like the roman night watch, eight prompts total
     hour = int(now.strftime("%H"))
     is_daytime = hour >= 6 and hour < 18
-    quarter = ((hour + 24 - 6) % 12) // 3
+    quarter = ((hour + 24 - 6) % 24) // 3
     veg = vegetables[quarter]
-    tod = daynight[0 if is_daytime else 1]
-    return f"{veg} {tod}, {vegetable_media[0]}"
+    return f"pen and watercolor drawing of {veg}"
 
 
 if __name__ == "__main__":
-    archive = "tempsperdu"
+    archive = "260106"
     os.makedirs(archive, exist_ok=True)
     hour = int(sys.argv[1])
     minute = int(sys.argv[2])
@@ -89,6 +84,8 @@ if __name__ == "__main__":
     image = t2i(
         prompt=prompt,
         seed=seed,
+        negative_prompt="wrong, ugly, abstract, geometric, tiled, wallpaper"
     )
     image.save(f"{archive}/{prompt}.{hour:02d}{minute:02d}.{seed}.png")
     image.save("/tmp/beauty.png")
+    with open("/tmp/beauty.txt", "w") as f: f.write(prompt)
