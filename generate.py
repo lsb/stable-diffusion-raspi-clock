@@ -1,6 +1,5 @@
 from datetime import datetime
 import sys
-
 import os
 import torch
 torch.set_num_threads(os.cpu_count()*2)
@@ -52,70 +51,6 @@ def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed
     return image
 
 
-animals = [
-    "zebra",
-    "armadillo",
-    "bison",
-    "capybara",
-    "dragonfly",
-    "elephant",
-    "flamingo",
-    "giraffe",
-    "hippopotamus",
-    "iguana",
-    "jaguar",
-    "kangaroo",
-    "llama",
-    "monkey",
-    "narwhal",
-    "octopus",
-    "panda",
-    "quail",
-    "raccoon",
-    "snakes",
-    "turtle",
-    "unicorn",
-    "vulture",
-    "worm",
-]
-
-vehicles = [
-    "in a zeppelin",
-    "in an ambulance",
-    "on the bus",
-    "in a chariot",
-    "on a dump truck",
-    "in an elevator",
-    "in a fire truck",
-    "in a golf cart",
-    "in a helicopter",
-    "at an ice cream truck",
-    "in a jeep",
-    "in a kayak",
-    "in a limousine",
-    "on a motorcycle",
-    "in a navy submarine",
-    "on an ocean liner",
-    "on a plane",
-    "on a quad bike",
-    "in a rocket",
-    "in a stroller",
-]
-
-media = [
-    "etching by durer",
-    "award winning photograph",
-    "ukiyo-e",
-]
-
-
-def clock_time_to_animal_prompt(now):
-    hour = int(now.strftime("%H"))
-    minute = int(now.strftime("%M"))
-    twelve_hour_time = now.strftime("%I %M %p")
-    return f"{animals[hour]}, {vehicles[minute//3]}, at {twelve_hour_time}, {media[minute%3]}"
-
-
 vegetables = [
     "avocado with the pit",
     "broccoli floret",
@@ -142,17 +77,6 @@ def clock_time_to_still_life_prompt(now):
     veg = vegetables[quarter]
     tod = daynight[0 if is_daytime else 1]
     return f"{veg} {tod}, {vegetable_media[0]}"
-
-
-
-def save_image_for_time(hour, minutes, now=None):
-    if now == None:
-        now = datetime.now().timestamp()
-    prompt = time_to_prompt(hour, minutes)
-    print(prompt)
-    img = render_prompt(prompt)
-    filename = sanitize_alnum(f"sd15 {hour:02d} {minutes:02d} {prompt} {now}.jpg")
-    img.save(filename)
 
 
 if __name__ == "__main__":
