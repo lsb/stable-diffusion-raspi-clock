@@ -1,6 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 import os
+from PIL import Image
+import io
+import base64
 import torch
 torch.set_num_threads(os.cpu_count()*2)
 torch.set_num_interop_threads(os.cpu_count()*2)
@@ -74,18 +77,98 @@ def clock_time_to_still_life_prompt(now):
     return f"pen and watercolor drawing of {veg}"
 
 
+loading_image = Image.open(io.BytesIO(base64.b64decode(
+    "iVBORw0KGgoAAAANSUhEUgAAAA8AAAAYAQAAAAANfprEAAAAQUlEQVQI12P4/4+hgYlh/icQef8bCN3axnC3jOHcM4bn5xg+zWP4aQdCn+cxPDvHcP4Zw71vIFmgmqthCI3//wEA2oIh9bx+K3sAAAAASUVORK5CYII="
+)))
+
 if __name__ == "__main__":
-    archive = "260106"
+    archive = "archive"
     os.makedirs(archive, exist_ok=True)
-    hour = int(sys.argv[1])
-    minute = int(sys.argv[2])
-    seed = int(datetime.now().timestamp())
-    prompt = clock_time_to_still_life_prompt(datetime(2023,1,1,hour,minute))
-    image = t2i(
-        prompt=prompt,
-        seed=seed,
-        negative_prompt="wrong, ugly, abstract, geometric, tiled, wallpaper"
-    )
-    image.save(f"{archive}/{prompt}.{hour:02d}{minute:02d}.{seed}.png")
-    image.save("/tmp/beauty.png")
-    with open("/tmp/beauty.txt", "w") as f: f.write(prompt)
+    if sys.argv[1] == "infinite":
+        loading_image.save("/tmp/beauty.png")
+        with open("/tmp/beauty.txt", "w") as f:
+            f.write("believe us, they say, / it is a serious thing / just to be alive / on this fresh morning / in the broken world. / I beg of you, / do not walk by / without pausing / to attend to this / rather ridiculous performance.")
+            # Oh do you have time
+            #   to linger
+            #     for just a little while
+            #       out of your busy
+            #
+            # and very important day
+            #   for the goldfinches
+            #     that have gathered
+            #       in a field of thistles
+            #
+            # for a musical battle,
+            #   to see who can sing
+            #     the highest note,
+            #       or the lowest,
+            #
+            # or the most expressive of mirth,
+            #   or the most tender?
+            #     Their strong, blunt beaks
+            #       drink the air
+            #
+            # as they strive
+            #   melodiously
+            #     not for your sake
+            #       and not for mine
+            #
+            # and not for the sake of winning
+            #   but for sheer delight and gratitude—
+            #     believe us, they say,
+            #       it is a serious thing
+            #
+            # just to be alive
+            #   on this fresh morning
+            #     in this broken world.
+            #       I beg of you,
+            #
+            # do not walk by
+            #   without pausing
+            #     to attend to this
+            #       rather ridiculous performance.
+            #
+            # It could mean something.
+            #   It could mean everything.
+            #     It could be what Rilke meant, when he wrote:
+            #       𝘠𝘰𝘶 𝘮𝘶𝘴𝘵 𝘤𝘩𝘢𝘯𝘨𝘦 𝘺𝘰𝘶𝘳 𝘭𝘪𝘧𝘦.
+            #
+            # —Mary Oliver, Invitation
+        target_latency = 3 * 3600
+        current_steps = 20
+        current_latency = 0
+        for i in range(1000000000): # average number of total human heartbeats, ymmv
+            prerender_time = datetime.now()
+            hour = prerender_time.hour
+            minute = 0
+            seed = int(prerender_time.timestamp())
+            prompt = clock_time_to_still_life_prompt(prerender_time + timedelta(seconds=current_latency))
+            image = t2i(
+                prompt=prompt,
+                seed=seed,
+                n_steps=current_steps,
+                negative_prompt="wrong, ugly, abstract, geometric, tiled, wallpaper",
+            )
+            postrender_time = datetime.now()
+            current_latency = postrender_time.timestamp() - prerender_time.timestamp()
+            image.save(f"{archive}/{prompt}.{seed}.{prerender_time.strftime('%Y%m%dT%H%M%SZ')}.png")
+            image.save("/tmp/beauty.png")
+            caption = f"{prompt} - {i}, {current_steps} steps @ {int(current_latency)}s"
+            with open("/tmp/beauty.txt", "w") as f: f.write(caption)
+            steps_increment = 1 if current_latency < target_latency else -1
+            current_steps = current_steps + steps_increment
+    else:
+        hour = int(sys.argv[1])
+        minute = int(sys.argv[2])
+        seed = int(datetime.now().timestamp())
+        prompt = clock_time_to_still_life_prompt(datetime(2023,1,1,hour,minute))
+        image = t2i(
+            prompt=prompt,
+            seed=seed,
+            n_steps=100,
+            negative_prompt="wrong, ugly, abstract, geometric, tiled, wallpaper"
+        )
+        image.save(f"{archive}/{prompt}.{hour:02d}{minute:02d}.{seed}.png")
+        image.save("/tmp/beauty.png")
+        with open("/tmp/beauty.txt", "w") as f: f.write(prompt)
+
