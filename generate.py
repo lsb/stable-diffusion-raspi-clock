@@ -61,7 +61,7 @@ vegetables = [
     "eggplant",
     "sliced fig",
     "green beans",
-    "hazelnut nutella on bread",
+    "honeycomb with bees",
 ]
 
 
