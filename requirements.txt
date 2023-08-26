@@ -1,0 +1,7 @@
+torch
+transformers
+diffusers
+invisible_watermark
+accelerate
+safetensors
+
