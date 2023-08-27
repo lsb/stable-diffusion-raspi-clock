@@ -134,7 +134,7 @@ if __name__ == "__main__":
             #       𝘠𝘰𝘶 𝘮𝘶𝘴𝘵 𝘤𝘩𝘢𝘯𝘨𝘦 𝘺𝘰𝘶𝘳 𝘭𝘪𝘧𝘦.
             #
             # —Mary Oliver, Invitation
-        target_latency = 3 * 3600
+        target_latency = 2 * 3600
         current_steps = 20
         current_latency = 0
         for i in range(1000000000): # average number of total human heartbeats, ymmv
