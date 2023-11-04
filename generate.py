@@ -7,29 +7,36 @@ import base64
 import torch
 torch.set_num_threads(os.cpu_count()*2)
 torch.set_num_interop_threads(os.cpu_count()*2)
-from diffusers import DiffusionPipeline, AutoencoderTiny
+from diffusers import DiffusionPipeline, AutoencoderTiny, UniPCMultistepScheduler
 model_id = "stabilityai/stable-diffusion-xl-base-1.0"
 refiner_id = "stabilityai/stable-diffusion-xl-refiner-1.0"
 vae_id = "sayakpaul/taesdxl-diffusers"
 
-#vae = AutoencoderTiny.from_pretrained(vae_id, use_safetensors=True)
-#vae.config.block_out_channels = vae.config.decoder_block_out_channels
+vae = AutoencoderTiny.from_pretrained(
+    vae_id,
+    use_safetensors=True,
+    local_files_only=True,
+)
+vae.config.block_out_channels = vae.config.decoder_block_out_channels
 base = DiffusionPipeline.from_pretrained(
     model_id,
     use_safetensors=True,
-#    vae=vae,
+    vae=vae,
+    local_files_only=True,
 )
 base.enable_attention_slicing(slice_size=1)
+base.scheduler = UniPCMultistepScheduler.from_config(base.scheduler.config)
 base.set_progress_bar_config(disable=True)
 refiner = DiffusionPipeline.from_pretrained(
     refiner_id,
     text_encoder_2=base.text_encoder_2,
     vae=base.vae,
     use_safetensors=True,
+    local_files_only=True,
 )
 refiner.enable_attention_slicing(slice_size=1)
 refiner.set_progress_bar_config(disable=True)
-base.vae.enable_tiling()
+#base.vae.enable_tiling()
 if torch.backends.mps.is_available():
     print("🚀 mps 🚀 ")
     base = base.to("mps")
@@ -43,8 +50,8 @@ def t2i(prompt="a roman woman at work on her laptop, fresco, from Pompeii", seed
         negative_prompt=negative_prompt,
         generator=gen,
         num_inference_steps=n_steps,
-        height=1024,
-        width=1024,
+        height=512,
+        width=512,
         denoising_end=high_noise_frac,
         output_type="latent",
         guidance_scale=guidance_scale,
@@ -152,7 +159,7 @@ if __name__ == "__main__":
                 prompt=prompt,
                 seed=seed,
                 n_steps=current_steps,
-                negative_prompt="wrong, ugly, abstract, geometric, tiled, wallpaper",
+                negative_prompt="wrong, ugly, abstract, geometric, tiled",
             )
             postrender_time = datetime.now()
             current_latency = postrender_time.timestamp() - prerender_time.timestamp()
